@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Todo App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0f;
+      --surface: #141417;
+      --border: #2a2a30;
+      --accent: #e8ff47;
+      --text: #e8e8ec;
+      --muted: #5a5a66;
+      --green: #47ffb0;
+      --mono: 'Space Mono', monospace;
+      --display: 'Syne', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 60px 20px;
+    }
+
+    /* subtle grid overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(232,255,71,.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232,255,71,.015) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      max-width: 560px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      animation: fadeIn .4s ease both;
+    }
+
+    .card-header {
+      padding: 28px 28px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .label {
+      font-size: 10px;
+      letter-spacing: .3em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      font-family: var(--display);
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -.03em;
+    }
+
+    .endpoint {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .endpoint code {
+      color: var(--accent);
+      background: rgba(232,255,71,.08);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    /* Stats row */
+    .stats {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stat {
+      flex: 1;
+      padding: 14px 20px;
+      border-right: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .stat:last-child { border-right: none; }
+
+    .stat-num {
+      font-family: var(--display);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .stat-lbl {
+      font-size: 9px;
+      letter-spacing: .15em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* List */
+    #list {
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 80px;
+    }
+
+    .todo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      animation: slideIn .25s ease both;
+      transition: border-color .15s;
+    }
+
+    .todo-row:hover { border-color: #3e3e48; }
+
+    .badge {
+      width: 20px; height: 20px;
+      border-radius: 3px;
+      font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-weight: 700;
+    }
+
+    .badge.done  { background: var(--green); color: #0d0d0f; }
+    .badge.open  { border: 1.5px solid var(--border); color: var(--muted); }
+
+    .todo-title {
+      flex: 1;
+      font-size: 13px;
+      letter-spacing: .02em;
+    }
+
+    .todo-row.done .todo-title {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .todo-id {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: .1em;
+    }
+
+    /* Loading / error states */
+    .state-msg {
+      text-align: center;
+      padding: 32px 0;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    /* Footer */
+    .card-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn-reload {
+      background: var(--accent);
+      color: #0d0d0f;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 18px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+    }
+
+    .btn-reload:hover  { background: #f5ff80; }
+    .btn-reload:active { transform: scale(.96); }
+
+    .status-dot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+
+    .dot.online  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .dot.offline { background: #ff4747; }
+
+    @keyframes fadeIn  { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <div class="card-header">
+    <div class="label">// API Demo</div>
+    <h1>Task List</h1>
+    <p class="endpoint">Fetching from <code>GET /api/todos</code></p>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num" id="s-total">—</div>
+      <div class="stat-lbl">Total</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="s-done">—</div>
+      <div class="stat-lbl">Done</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="s-open">—</div>
+      <div class="stat-lbl">Open</div>
+    </div>
+  </div>
+
+  <div id="list">
+    <div class="state-msg">Loading...</div>
+  </div>
+
+  <div class="card-footer">
+    <div class="status-dot">
+      <span class="dot" id="dot"></span>
+      <span id="status-text">Connecting...</span>
+    </div>
+    <button class="btn-reload" onclick="fetchTodos()">↻ RELOAD</button>
+  </div>
+
+</div>
+
+<script>
+  // ── Change this to your EC2 public IP/domain before deploying ──
+  const API_BASE = "http://13.60.48.229:5000/api";
+
+  async function fetchTodos() {
+    const list = document.getElementById("list");
+    list.innerHTML = '<div class="state-msg">Loading...</div>';
+    setStatus("Connecting...", "");
+
+    try {
+      const res  = await fetch(`${API_BASE}/todos`);
+      const data = await res.json();
+      renderTodos(data);
+      setStatus("Connected", "online");
+    } catch {
+      list.innerHTML = '<div class="state-msg">⚠ Cannot reach backend</div>';
+      setStatus("Offline", "offline");
+    }
+  }
+
+  function renderTodos(todos) {
+    const done  = todos.filter(t => t.completed).length;
+    const open  = todos.length - done;
+
+    document.getElementById("s-total").textContent = todos.length;
+    document.getElementById("s-done").textContent  = done;
+    document.getElementById("s-open").textContent  = open;
+
+    document.getElementById("list").innerHTML = todos.map((t, i) => `
+      <div class="todo-row ${t.completed ? 'done' : ''}" style="animation-delay:${i * 50}ms">
+        <span class="badge ${t.completed ? 'done' : 'open'}">${t.completed ? '✓' : t.id}</span>
+        <span class="todo-title">${t.title}</span>
+        <span class="todo-id">#${t._id}</span>
+      </div>
+    `).join("");
+  }
+
+  function setStatus(text, state) {
+    document.getElementById("status-text").textContent = text;
+    const dot = document.getElementById("dot");
+    dot.className = "dot " + state;
+  }
+
+  fetchTodos();
+</script>
+</body>
+</html>
