@@ -293,7 +293,7 @@
 
     document.getElementById("list").innerHTML = todos.map((t, i) => `
       <div class="todo-row ${t.completed ? 'done' : ''}" style="animation-delay:${i * 50}ms">
-        <span class="badge ${t.completed ? 'done' : 'open'}">${t.completed ? '✓' : t.id}</span>
+        <span class="badge ${t.completed ? 'done' : 'open'}">${t.completed ? '✓' : i+1}</span>
         <span class="todo-title">${t.title}</span>
         <span class="todo-id">#${t._id}</span>
       </div>
