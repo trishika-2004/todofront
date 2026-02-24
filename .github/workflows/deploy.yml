@@ -3,7 +3,7 @@ name: Deploy Todo Frontend to EC2
 on:
   push:
     branches:
-      - main
+      - main 
 
 jobs:
   deploy:
